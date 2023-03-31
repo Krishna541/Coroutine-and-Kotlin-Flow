@@ -77,17 +77,39 @@ val result = deferredJob.await()
 
  -  Let's see the code for the withContext.
     
-    CoroutineScope(Dispatchers.IO).launch {
-    val user = fetchUser() // fetch on IO thread
-    showUser(user) // back on UI thread
-}
-    private suspend fun doLongRunningTask(): Int {
+``` private suspend fun doLongRunningTask(): Int {
     return withContext(Dispatchers.Default) {
         // your code for doing a long running task
         // Added delay to simulate
         delay(2000)
         return@withContext 10
  }
+ }
+```
+# Dispatchers in Kotlin Coroutines 
+- Dispatchers help Coroutines in deciding the thread on which the task has to be done. We use Coroutines to perform certain tasks efficiently. 
+      Coroutines run the task on a particular thread. This is where the Dispatchers come into play. 
+      Coroutines take the help of Dispatchers in deciding the thread on which the task has to be done.
+    
+ - Very frequently we use the following Dispatchers in our Android project:
+ ## Dispatchers.Default
+ #### We should use Dispatchers.Default to perform CPU-intensive tasks.
+ - Example use cases:
+ - Doing heavy calculations like Matrix multiplications.
+ - Doing any operations on a bigger list present in the memory like sorting, filtering, searching, etc.
+ - Applying the filter on the Bitmap present in the memory, NOT by reading the image file present on the disk.
+ - Parsing the JSON available in the memory, NOT by reading the JSON file present on the disk.
+ - Scaling the bitmap already present in the memory, NOT by reading the image file present on the disk.
+ - Any operations on the bitmap that are already present in the memory, NOT by reading the image file present on the disk.
+    
+ ``` 
+ launch(Dispatchers.Default) {
+    // Your CPU-intensive task
 }
+```
+     ## Dispatchers.IO
+     ## Dispatchers.Main
+
+
 
     
