@@ -10,3 +10,25 @@
 - Cancellation is propagated automatically through the running coroutine hierarchy.
 #### Jetpack integration: 
 - Many Jetpack libraries include extensions that provide full coroutines support. Some libraries also provide their own coroutine scope that you can use for structured concurrency.
+#### dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
+}
+
+#### Suspend Function : 
+-  When we add the suspend keyword in the function, all the cooperations are automatically done for us. We don't have to use when or switch case. When we write like below:
+
+suspend fun fetchUser(): User {
+     // make network call
+     // return user
+}
+
+
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    GlobalScope.launch(Dispatchers.Main) {
+        val user = fetchUser() // fetch on IO thread
+        showUser(user) // back on UI thread
+    }
+
+}
