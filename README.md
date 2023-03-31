@@ -15,7 +15,7 @@
 }
 
 #### Suspend Function / launch / async: 
-       #### suspend function : 
+ ### suspend function : 
 -  When we add the suspend keyword in the function, all the cooperations are automatically done for us. We don't have to use when or switch case. When we write like below:
 
   - suspend fun fetchUser(): User {
@@ -48,7 +48,7 @@ In other words:
 Let's take an example to learn launch vs async.
 
 We can use the launch as below:
-    val job = GlobalScope.launch(Dispatchers.Default) {
+     - val job = GlobalScope.launch(Dispatchers.Default) {
     // do something and do not return result
 }
 
@@ -59,13 +59,14 @@ But when we need the result back, we need to use the async.
 }
 val result = deferredJob.await()
 
-Here, we get the result using the await().
+ - Here, we get the result using the await().
 
-In async also, we can use the Deferred job object to get a job's status or to cancel it.
+ - In async also, we can use the Deferred job object to get a job's status or to cancel it.
 
 
-Launch	                            Async
-Fire and forget.	                                            Perform a task and return a result.
-launch{} returns a Job and does not carry any resulting value.	async{} returns an instance of Deferred<T>, which has an await() function that returns the result of the coroutine.
-If any exception comes inside the launch block,                  If any exception comes inside the async block, it is stored inside the resulting Deferred and is not                                                                    delivered anywhere else, it will get silently dropped unless we handle it.
-it crashes the application if we have not handled it.	
+| launch              | async                                                                                                                        |
+| --------------------|:---------------------------------------:|
+| Fire and forget.                                              | Perform a task and return a result.
+| launch{} returns a Job and does not carry any resulting value.| async{} returns an instance of Deferred<T>, which has an await() function that returns the result of the coroutine.                                                   
+| If an y exception comes inside the launch block, it crashes the application if we have not handled it. | If any exception comes inside the async block, it is stored inside the resulting Deferred and is not delivered anywhere else, it will get silently dropped unless we handle it. |                                                          
+
