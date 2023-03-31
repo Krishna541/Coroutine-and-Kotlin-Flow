@@ -77,13 +77,17 @@ val result = deferredJob.await()
 
  -  Let's see the code for the withContext.
     
+    CoroutineScope(Dispatchers.IO).launch {
+    val user = fetchUser() // fetch on IO thread
+    showUser(user) // back on UI thread
+}
     private suspend fun doLongRunningTask(): Int {
     return withContext(Dispatchers.Default) {
         // your code for doing a long running task
         // Added delay to simulate
         delay(2000)
         return@withContext 10
-    }
+ }
 }
 
     
