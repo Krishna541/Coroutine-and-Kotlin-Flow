@@ -17,16 +17,19 @@
 #### Suspend Function : 
 -  When we add the suspend keyword in the function, all the cooperations are automatically done for us. We don't have to use when or switch case. When we write like below:
 
-suspend fun fetchUser(): User {
+  - suspend fun fetchUser(): User {
      // make network call
      // return user
+}
+- fun showUser(user: User) {
+    // show user
 }
 
 
 override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    GlobalScope.launch(Dispatchers.Main) {
+    CoroutineScope(Dispatchers.IO).launch {
         val user = fetchUser() // fetch on IO thread
         showUser(user) // back on UI thread
     }
