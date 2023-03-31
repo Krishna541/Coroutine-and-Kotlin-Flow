@@ -48,7 +48,7 @@ In other words:
 Let's take an example to learn launch vs async.
 
 We can use the launch as below:
-     - val job = GlobalScope.launch(Dispatchers.Default) {
+     *** val job = GlobalScope.launch(Dispatchers.Default) {
     // do something and do not return result
 }
 
@@ -68,5 +68,22 @@ val result = deferredJob.await()
 | --------------------|:---------------------------------------:|
 | Fire and forget.                                              | Perform a task and return a result.
 | launch{} returns a Job and does not carry any resulting value.| async{} returns an instance of Deferred<T>, which has an await() function that returns the result of the coroutine.                                                   
-| If an y exception comes inside the launch block, it crashes the application if we have not handled it. | If any exception comes inside the async block, it is stored inside the resulting Deferred and is not delivered anywhere else, it will get silently dropped unless we handle it. |                                                          
+| If an y exception comes inside the launch block, it crashes the application if we have not handled it. | If any exception comes inside the async block, it is stored inside the resulting Deferred and is not delivered anywhere else, it will get silently dropped unless we handle it. |                                                   
+    
+ ### withContext dispatchers scope : 
+    - withContext is a suspend function through which we can do a task by providing the Dispatchers on which we want the task to be done.
 
+ - withContext does not create a new coroutine, it only shifts the context of the existing coroutine and it's a suspend function whereas launch and async create a new      coroutine and they are not suspend functions.
+
+ -  Let's see the code for the withContext.
+    
+    private suspend fun doLongRunningTask(): Int {
+    return withContext(Dispatchers.Default) {
+        // your code for doing a long running task
+        // Added delay to simulate
+        delay(2000)
+        return@withContext 10
+    }
+}
+
+    
