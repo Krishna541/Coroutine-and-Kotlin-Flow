@@ -107,8 +107,37 @@ val result = deferredJob.await()
     // Your CPU-intensive task
 }
 ```
-     ## Dispatchers.IO
-     ## Dispatchers.Main
+## Dispatchers.IO
+#### We should use Dispatchers.IO to perform disk or network I/O-related tasks.
+
+- Example use cases:
+
+- Any network operations like making a network call.
+- Downloading a file from the server.
+- Moving a file from one location to another on disk.
+- Reading from a file.
+- Writing to a file.
+- Making a database query.
+- Loading the Shared Preferences.
+```
+launch(Dispatchers.IO) {
+    // Your IO related task
+}
+```
+## Dispatchers.IO
+#### We should use Dispatchers.Main to run a coroutine on the main thread of Android. We all know where we use the main thread of Android. Mainly at the places where we interact with the UI and perform small tasks.
+
+- Example use cases:
+- Performing UI-related tasks.
+- Any small tasks like any operations on a smaller list present in the memory like sorting, filtering, searching, etc.
+    
+```
+launch(Dispatchers.Main) {
+    // Your main thread related task
+}
+```
+    
+ 
 
 
 
