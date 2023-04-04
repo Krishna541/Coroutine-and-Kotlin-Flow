@@ -136,7 +136,33 @@ launch(Dispatchers.Main) {
     // Your main thread related task
 }
 ```
-    
+# lifecycleScope, viewModelScope, GlobalScope
+## viewModelScope
+- Coroutine scope attached with your viewmodel
+- Coroutines in this scope will be cancelled automatically when viewmodel is cleared. we don't need to manually cancel the coroutine.
+````
+ init {
+    viewModelScope.launch{
+    delay(3000)
+    Log.d("","Hello viewModelScope")
+    }
+    }
+   override fun onCleared{
+    Log.d("","viewModel Destroyed")
+    }
+````
+## lifeCycleScope
+- Coroutine scope attached with lifecycle (Activity or Fragment)
+- Coroutines in this scope will be cancelled automatically when lifecycle is destroyed. we don't need to manually cancel the coroutine.
+````
+ lifecycleScope.launch{
+    delay(2000)
+    val intent = Intent(this@MainActivity,SecondActivity::class.java)
+    startActivity(intent)
+    finish()
+    }
+````
+
  
 
 
