@@ -220,10 +220,10 @@ fun loadConfiguration() {
 ````
 - So now, if any error comes, it will continue with the empty list. This is how supervisorScope helps.
 
-- The major difference:
+#### The major difference:
 
--- A coroutineScope will cancel whenever any of its children fail.
--- A supervisorScope won't cancel other children when one of them fails.
+- A coroutineScope will cancel whenever any of its children fail.
+- A supervisorScope won't cancel other children when one of them fails.
     
 ### Note:
 
