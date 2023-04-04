@@ -177,6 +177,60 @@ fun loadConfiguration() {
 }
 ```
 - A call to loadConfiguration creates a coroutine in the GlobalScope that works in background without any provision to cancel it or to wait for its completion.
+    
+# coroutineScope
+    
+- if any one of the two network calls leads to an error, the application will crash! it will NOT go to the catch block.
+
+- To solve this, we will have to use the coroutineScope as below:
+````
+    launch {
+    try {
+        coroutineScope {
+            val usersDeferred = async {  getUsers() }
+            val moreUsersDeferred = async { getMoreUsers() }
+            val users = usersDeferred.await()
+            val moreUsers = moreUsersDeferred.await()
+        }
+    } catch (exception: Exception) {
+        // handle exception
+    }
+}
+````
+- Now, if any network error comes, it will go to the catch block. This is how coroutineScope helps.
+
+- But suppose again, we want to return an empty list for the network call which has failed and continue with the response from the other network call. We will have to use the supervisorScope and add the try-catch block to the individual network call as below:
+````
+ launch {
+    supervisorScope {
+        val usersDeferred = async { getUsers() }
+        val moreUsersDeferred = async { getMoreUsers() }
+        val users = try {
+            usersDeferred.await()
+        } catch (e: Exception) {
+            emptyList<User>()
+        }
+        val moreUsers = try {
+            moreUsersDeferred.await()
+        } catch (e: Exception) {
+            emptyList<User>()
+        }
+    }
+}
+````
+- So now, if any error comes, it will continue with the empty list. This is how supervisorScope helps.
+
+- The major difference:
+
+-- A coroutineScope will cancel whenever any of its children fail.
+-- A supervisorScope won't cancel other children when one of them fails.
+    
+### Note:
+
+- Use coroutineScope with the top-level try-catch, when you do NOT want to continue with other tasks if any of them have failed.
+- If we want to continue with the other tasks even when one fails, we go with the supervisorScope.
+Use supervisorScope with the individual try-catch for each task, when you want to continue with other tasks if one or some of them have failed.
+    
 
  
 
