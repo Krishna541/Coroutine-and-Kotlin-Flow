@@ -136,7 +136,7 @@ launch(Dispatchers.Main) {
     // Your main thread related task
 }
 ```
-# lifecycleScope, viewModelScope, GlobalScope
+# lifecycleScope, viewModelScope, GlobalScope , coroutineScope, supervisorScope
 ## viewModelScope
 - Coroutine scope attached with your viewmodel
 - Coroutines in this scope will be cancelled automatically when viewmodel is cleared. we don't need to manually cancel the coroutine.
