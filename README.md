@@ -162,6 +162,21 @@ launch(Dispatchers.Main) {
     finish()
     }
 ````
+# GlobalScope
+- A global CoroutineScope not bound to any job. Global scope is used to launch top-level coroutines which are operating on the whole application lifetime and are not cancelled prematurely.
+
+- Active coroutines launched in GlobalScope do not keep the process alive. They are like daemon threads.
+
+- This is a delicate API. It is easy to accidentally create resource or memory leaks when GlobalScope is used. A coroutine launched in GlobalScope is not subject to the principle of structured concurrency, so if it hangs or gets delayed due to a problem (e.g. due to a slow network), it will stay working and consuming resources. For example, consider the following code:
+```
+fun loadConfiguration() {
+    GlobalScope.launch {
+        val config = fetchConfigFromServer() // network request
+        updateConfiguration(config)
+    }
+}
+```
+- A call to loadConfiguration creates a coroutine in the GlobalScope that works in background without any provision to cancel it or to wait for its completion.
 
  
 
