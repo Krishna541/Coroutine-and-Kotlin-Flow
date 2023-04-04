@@ -231,8 +231,118 @@ fun loadConfiguration() {
 - If we want to continue with the other tasks even when one fails, we go with the supervisorScope.
 Use supervisorScope with the individual try-catch for each task, when you want to continue with other tasks if one or some of them have failed.
     
+# suspendCoroutine / suspendCancellableCoroutine
+## suspendCoroutine
+    
+- suspendCoroutine is a builder function that mainly used to convert callbacks into suspend functions. Let's say for example you have some legacy (or not) Api, that       uses callbacks. You can easily transform it into a suspend function to call it in a coroutine. For example:
 
- 
+```
+suspend fun getUser(id: String): User  = suspendCoroutine { continuation ->
+      Api.getUser(id) { user ->
+          continuation.resume(user)
+      }
+}
+```
+    
+-Here we have an Api function getUser, which defined in Api class for example like this:
+
+``` 
+fun getUser(id: String, callback: (User) -> Unit) {...}
+```
+    
+- suspendCoroutine suspends coroutine in which it executed until we decide to continue by calling appropriate methods - Continuation.resume.... suspendCoroutine mainly used when we have some legacy code with callbacks.
+
+- Using suspendCoroutine to convert callbacks into suspend functions makes the code sequential when you work with suspend functions.
+
+- For example instead of having a callback hell like this:
+
+```
+Api.getUser(id) { user ->
+      Api.getProfile(user) { profile ->
+          Api.downloadImage(profile.imageId) { image ->
+              // ...
+          }
+      } 
+}
+```
+    
+after you apply suspendCoroutine to those callbacks and convert them into suspend functions, the code will look like the following:
+
+```
+val user = getUser(id)
+val profile = getProfile(user)
+val image = downloadImage(profile.imageId)
+```
+## suspendCancellableCoroutine
+    
+```
+    inline suspend fun <T> suspendCancellableCoroutine(crossinline block: (CancellableContinuation<T>) -> Unit): T
+```
+    
+- Suspends the coroutine like suspendCoroutine, but providing a CancellableContinuation to the block. This function throws a CancellationException if the Job of the      coroutine is cancelled or completed while it is suspended.
+
+- A typical use of this function is to suspend a coroutine while waiting for a result from a single-shot callback API and to return the result to the caller. For multi-shot callback APIs see callbackFlow.
+    
+```
+suspend fun awaitCallback(): T = suspendCancellableCoroutine { continuation ->
+    val callback = object : Callback { // Implementation of some callback interface
+        override fun onCompleted(value: T) {
+            // Resume coroutine with a value provided by the callback
+            continuation.resume(value)
+        }
+        override fun onApiError(cause: Throwable) {
+            // Resume coroutine with an exception provided by the callback
+            continuation.resumeWithException(cause)
+        }
+    }
+    // Register callback with an API
+    api.register(callback)
+    // Remove callback on cancellation
+    continuation.invokeOnCancellation { api.unregister(callback) }
+    // At this point the coroutine is suspended by suspendCancellableCoroutine until callback fires
+}
+```
+    
+- The callback register/unregister methods provided by an external API must be thread-safe, because invokeOnCancellation block can be called at any time due to asynchronous nature of cancellation, even concurrently with the call of the callback.
+
+### Prompt cancellation guarantee
+- This function provides prompt cancellation guarantee. If the Job of the current coroutine was cancelled while this function was suspended it will not resume              successfully.
+
+- The cancellation of the coroutine's job is generally asynchronous with respect to the suspended coroutine. The suspended coroutine is resumed with the call it to its Continuation.resumeWith member function or to resume extension function. However, when coroutine is resumed, it does not immediately start executing, but is passed to its CoroutineDispatcher to schedule its execution when dispatcher's resources become available for execution. The job's cancellation can happen both before, after, and concurrently with the call to resume. In any case, prompt cancellation guarantees that the the coroutine will not resume its code successfully.
+
+- If the coroutine was resumed with an exception (for example, using Continuation.resumeWithException extension function) and cancelled, then the resulting exception      of the suspendCancellableCoroutine function is determined by whichever action (exceptional resume or cancellation) that happened first.
+
+- Returning resources from a suspended coroutine
+- As a result of a prompt cancellation guarantee, when a closeable resource (like open file or a handle to another native resource) is returned from a suspended coroutine as a value it can be lost when the coroutine is cancelled. In order to ensure that the resource can be properly closed in this case, the CancellableContinuation interface provides two functions.
+
+- invokeOnCancellation installs a handler that is called whenever a suspend coroutine is being cancelled. In addition to the example at the beginning, it can be used to ensure that a resource that was opened before the call to suspendCancellableCoroutine or in its body is closed in case of cancellation.
+    
+```
+  suspendCancellableCoroutine { continuation ->
+   val resource = openResource() // Opens some resource
+   continuation.invokeOnCancellation {
+       resource.close() // Ensures the resource is closed on cancellation
+   }
+   // ...
+}
+```
+    
+- resume(value) { ... } method on a CancellableContinuation takes an optional onCancellation block. It can be used when resuming with a resource that must be closed by the code that called the corresponding suspending function.
+    
+```
+suspendCancellableCoroutine { continuation ->
+    val callback = object : Callback { // Implementation of some callback interface
+        // A callback provides a reference to some closeable resource
+        override fun onCompleted(resource: T) {
+            // Resume coroutine with a value provided by the callback and ensure the resource is closed in case
+            // when the coroutine is cancelled before the caller gets a reference to the resource.
+            continuation.resume(resource) {
+                resource.close() // Close the resource on cancellation
+            }
+        }
+    // ...
+}
+```
 
 
 
