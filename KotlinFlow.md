@@ -364,15 +364,21 @@ The collectors will get an extra value in addition to the values from where they
 
 # State Flow & Shared Flow
 
-StateFlow vs SharedFlow
+| StateFlow              | SharedFlow                                                                                                                        |
+| --------------------|:---------------------------------------:|
+| Hot Flow	                                          | Hot Flow
+
+| Needs an initial value and emits it as soon as the collector starts collecting.	| Does not need an initial value so does not emit any value by default.
+| val stateFlow = MutableStateFlow(0) | val sharedFlow = MutableSharedFlow<Int>() |     
+| Only emits the last known value.	 | Can be configured to emit many previous values using the replay operator. |    
+| It has the value property, we can check the current value. It keeps a history of one value that we can get directly without collecting.	 | It does not have the value property.
+|
+| It does not emit consecutive repeated values. It emits the value only when it is distinct from the previous item.	 |It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also. |     
+| Similar to LiveData except for the Lifecycle awareness of the Android component. We should use repeatOnLifecycle scope with StateFlow to add the Lifecycle awareness to it, then it will become exactly like LiveData. | Not similar to LiveData.
+|     
+    
 StateFlow	SharedFlow
-Hot Flow	Hot Flow
-Needs an initial value and emits it as soon as the collector starts collecting.	Does not need an initial value so does not emit any value by default.
-val stateFlow = MutableStateFlow(0)	val sharedFlow = MutableSharedFlow<Int>()
-Only emits the last known value.	Can be configured to emit many previous values using the replay operator.
-It has the value property, we can check the current value. It keeps a history of one value that we can get directly without collecting.	It does not have the value property.
-It does not emit consecutive repeated values. It emits the value only when it is distinct from the previous item.	It emits all the values and does not care about the distinct from the previous item. It emits consecutive repeated values also.
-Similar to LiveData except for the Lifecycle awareness of the Android component. We should use repeatOnLifecycle scope with StateFlow to add the Lifecycle awareness to it, then it will become exactly like LiveData.	Not similar to LiveData.
+
 Let's understand all of the above points from the example code.
 
 ### StateFlow example
