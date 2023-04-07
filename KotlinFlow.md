@@ -693,7 +693,7 @@ When we talk about retrying a task using operators in Kotlin Flow, we talk about
 ## retry
 Both operators can be used interchangeably in most cases, we will learn about them today.
 
-#retryWhen
+# retryWhen
 - Let's look at the source code to understand the definition of the retryWhen operator.
 ```
 fun <T> Flow<T>.retryWhen(predicate: suspend FlowCollector<T>.(cause: Throwable, attempt: Long) -> Boolean): Flow<T>
