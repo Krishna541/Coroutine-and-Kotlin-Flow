@@ -212,4 +212,152 @@ D/MainActivity: Janishar Ali
 | It does not store data.	                                     | It can store data.
 | It can't have multiple collectors.	 | It can have multiple collectors.
 
+In Cold Flow, in the case of multiple collectors, the complete flow will begin from the beginning for each one of the collectors, do the task and emit the values to their corresponding collectors. It's like 1-to-1 mapping. 1 Flow for 1 Collector. It means a cold flow can't have multiple collectors as it will create a new flow for each of the collectors.
 
+In Hot Flow, in the case of multiple collectors, the flow will keep on emitting the values, collectors get the values from where they have started collecting. It's like 1-to-N mapping. 1 Flow for N Collectors. It means a hot flow can have multiple collectors.
+
+Let's understand all of those above points from the example code.
+
+Note: I have just written the pseudo-code, this is not actual code. This is just written for the sake of understanding this topic in the simplest way.
+
+### Cold Flow example
+
+Suppose, we have a Cold Flow that emits 1 to 5 at an interval of 1 second.
+
+```
+fun getNumbersColdFlow(): ColdFlow<Int> {
+    return someColdflow {
+        (1..5).forEach {
+            delay(1000)
+            emit(it)
+        }
+    }
+}
+```
+Now, we are collecting:
+
+```
+val numbersColdFlow = getNumbersColdFlow()
+
+numbersColdFlow
+    .collect {
+        println("1st Collector: $it")
+    }
+
+delay(2500)
+
+numbersColdFlow
+    .collect {
+        println("2nd Collector: $it")
+    }
+```
+The output will be:
+
+```
+1st Collector: 1
+1st Collector: 2
+1st Collector: 3
+1st Collector: 4
+1st Collector: 5
+
+2nd Collector: 1
+2nd Collector: 2
+2nd Collector: 3
+2nd Collector: 4
+2nd Collector: 5
+
+```
+Both the collector will get all the values from the beginning. For both collectors, the corresponding Flow starts from the beginning.
+
+### Hot Flow example
+
+Suppose, we have a Hot Flow that emits 1 to 5 at an interval of 1 second.
+
+```
+fun getNumbersHotFlow(): HotFlow<Int> {
+    return someHotflow {
+        (1..5).forEach {
+            delay(1000)
+            emit(it)
+        }
+    }
+}
+```
+Now, we are collecting:
+
+```
+val numbersHotFlow = getNumbersHotFlow()
+
+numbersHotFlow
+    .collect {
+        println("1st Collector: $it")
+    }
+
+delay(2500)
+
+numbersHotFlow
+    .collect {
+        println("2nd Collector: $it")
+    }
+```
+The output will be:
+
+```
+1st Collector: 1
+1st Collector: 2
+1st Collector: 3
+1st Collector: 4
+1st Collector: 5
+
+2nd Collector: 3
+2nd Collector: 4
+2nd Collector: 5
+```
+The collectors will get the values from where they have started collecting. Here the 1st collector gets all the values. But the 2nd collector gets only those values that got emitted after 2500 milliseconds as it started collecting after 2500 milliseconds.
+
+Also, we can configure the Hot Flow to store the data. For example, we can configure it to store the last emitted value.
+
+For example, we configured the above example to store only one last emitted value.
+
+```
+fun getNumbersHotFlow(): HotFlow<Int> {
+    return someHotflow {
+        (1..5).forEach {
+            delay(1000)
+            emit(it)
+        }
+    }.store(count = 1)
+}
+```
+Now, if we collect:
+
+```
+val numbersHotFlow = getNumbersHotFlow()
+
+numbersHotFlow
+    .collect {
+        println("1st Collector: $it")
+    }
+
+delay(2500)
+
+numbersHotFlow
+    .collect {
+        println("2nd Collector: $it")
+    }
+```
+The output will be:
+
+```
+1st Collector: 1
+1st Collector: 2
+1st Collector: 3
+1st Collector: 4
+1st Collector: 5
+
+2nd Collector: 2
+2nd Collector: 3
+2nd Collector: 4
+2nd Collector: 5
+```
+The collectors will get an extra value in addition to the values from where they have started collecting. Here the 1st collector gets all the values. But the 2nd collector will also get "2"(as it stores the last emitted value) in addition to those values that got emitted after 2500 milliseconds even though it started collecting after 2500 milliseconds.
