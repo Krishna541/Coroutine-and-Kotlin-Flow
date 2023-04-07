@@ -204,5 +204,12 @@ D/MainActivity: Amit Shekhar
 D/MainActivity: Janishar Ali
 ```
 
+# Cold Flow | Hot Flow
+
+| Cold Flow             | hot Flow                                                        
+| --------------------|:---------------------------------------:|
+| It emits data only when there is a collector.                  | It emits data even when there is no collector.
+| It does not store data.	                                     | It can store data.
+| It can't have multiple collectors.	 | It can have multiple collectors.
 
 
