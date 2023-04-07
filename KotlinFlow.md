@@ -606,3 +606,249 @@ showSnackbarStateFlow: true will get collected here as StateFlow keeps the last 
 Disadvantage: It shows Snackbar again which is not required.
 
 So, in this case, we should use SharedFlow instead of StateFlow.
+
+# Terminal Operators
+    
+- Terminal operators are the operators that actually start the flow by connecting the flow builder, operators with the collector.
+
+For example:
+```
+(1..5).asFlow()
+.filter {
+    it % 2 == 0
+}
+.map {
+    it * it
+}.collect {
+    Log.d(TAG, it.toString())
+}
+
+#### Here, collect is the Terminal Operator.
+
+So, the most basic terminal operator is the collect operator which is the Collector.
+
+So, if you just write the following, the flow will not start:
+```
+(1..5).asFlow()
+.filter {
+    it % 2 == 0
+}
+.map {
+    it * it
+}
+```
+You must use the terminal operator to start it, in this case, collect.
+
+Let's see another Terminal Operator which is reduce Operator.
+
+- reduce: apply a function to each item emitted and emit the final value
+```
+ val result = (1..5).asFlow()
+    .reduce { a, b -> a + b }
+
+Log.d(TAG, result.toString())
+```
+Here, the result will be 15.
+### Explanation:
+
+At the initial stage, we have 1, 2, 3, 4, 5 which are going to be emitted.
+
+Initially a = 0 and b = 1 which will keep on changing based on the steps.
+### Step 1:
+```
+a = 0, b = 1
+
+a = a + b = 0 + 1 = 1
+```
+### Step 2:
+```
+a = 1, b = 2
+
+a = a + b = 1 + 2 = 3
+```
+### Step 3:
+```
+a = 3, b = 3
+
+a = a + b = 3 + 3 = 6
+```
+### Step 4:
+```
+a = 6, b = 4
+
+a = a + b = 6 + 4 = 10
+
+```
+### Step 5:
+```
+a = 10, b = 5
+
+a = a + b = 10 + 5 = 15
+```
+This is how the result will be 15.
+
+# Retry / Retrywhen Operator
+When we talk about retrying a task using operators in Kotlin Flow, we talk about the following two operators:
+
+## retryWhen
+## retry
+Both operators can be used interchangeably in most cases, we will learn about them today.
+
+#retryWhen
+- Let's look at the source code to understand the definition of the retryWhen operator.
+```
+fun <T> Flow<T>.retryWhen(predicate: suspend FlowCollector<T>.(cause: Throwable, attempt: Long) -> Boolean): Flow<T>
+```
+And, we use this operator as below:
+```
+.retryWhen { cause, attempt ->
+
+}
+```
+Here, we have two parameters as follows:
+
+cause: This cause is Throwable which is the base class for all errors and exceptions.
+attempt: This attempt is the number that represents the current attempt. It starts with zero.
+For example, if there is an exception when we started the task, we will receive the cause(exception) and attempt(0).
+
+-  The retryWhen takes a predicate function to decide whether to retry or not.
+
+- If the predicate function returns true, then only it will retry else it will not.
+
+For example, we can do as below:
+```
+.retryWhen { cause, attempt ->
+    if (cause is IOException && attempt < 3) {
+        delay(2000)
+        return@retryWhen true
+    } else {
+        return@retryWhen false
+    }
+}
+```
+In this case, we are returning true when the cause is IOException, and the attempt count is less than 3.
+
+So, it will only retry if the condition is satisfied.
+
+Note: As the predicate function is suspending function, we can call another suspending function from it.
+
+If we notice in the above code, we have called the delay(2000), so that it retries only after a delay of 2 seconds.
+
+retry
+This is the definition of the retry Flow operator.
+```
+fun <T> Flow<T>.retry(
+    retries: Long = Long.MAX_VALUE,
+    predicate: suspend (cause: Throwable) -> Boolean = { true }
+): Flow<T>
+```
+The complete block from the source code of Kotlin Flow.
+```
+fun <T> Flow<T>.retry(
+    retries: Long = Long.MAX_VALUE,
+    predicate: suspend (cause: Throwable) -> Boolean = { true }
+): Flow<T> {
+    require(retries > 0) { "Expected positive amount of retries, but had $retries" }
+    return retryWhen { cause, attempt -> attempt < retries && predicate(cause) }
+}
+```
+If we see the retry function, it actually calls the retryWhen internally.
+
+- retry function has default arguments.
+
+If we do not pass the retries, it will use the Long.MAX_VALUE.
+If we do not pass the predicate, it will provide true.
+For example, we can do as below:
+```
+.retry()
+```                                                      
+It will keep retrying until the task gets completed successfully.
+
+For example, we can also do as below:
+```
+.retry(3)
+ ```                                                         
+It will only retry 3 times.
+
+For example, we can also do as below:
+```
+.retry(retries = 3) { cause ->
+    if (cause is IOException) {
+        delay(2000)
+        return@retry true
+    } else {
+        return@retry false
+    }
+}
+```
+Here, it becomes very similar to what we did using the retryWhen above.
+
+Here, we are returning true when the cause is IOException. So, it will only retry when the cause is IOException.
+
+If we notice in the above code, we have called the delay(2000), so that it retries only after a delay of 2 seconds.
+
+- Now, let's see the code examples.
+
+- This is a function to simulate a long-running task with exceptions.
+```
+private fun doLongRunningTask(): Flow<Int> {
+    return flow {
+        // your code for doing a long running task
+        // Added delay, random number, and exception to simulate
+        delay(2000)
+        val randomNumber = (0..2).random()
+        if (randomNumber == 0) {
+            throw IOException()
+        } else if (randomNumber == 1) {
+            throw IndexOutOfBoundsException()
+        }
+        delay(2000)
+        emit(0)
+    }
+}
+```
+- Now, when using the retry operator
+```
+viewModelScope.launch {
+    doLongRunningTask()
+        .flowOn(Dispatchers.Default)
+        .retry(retries = 3) { cause ->
+            if (cause is IOException) {
+                delay(2000)
+                return@retry true
+            } else {
+                return@retry false
+            }
+        }
+        .catch {
+           // error
+        }
+        .collect {
+            // success
+        }
+}
+```
+Similarly, when using the retryWhen operator
+```
+viewModelScope.launch {
+    doLongRunningTask()
+        .flowOn(Dispatchers.Default)
+        .retryWhen { cause, attempt ->
+            if (cause is IOException && attempt < 3) {
+                delay(2000)
+                return@retryWhen true
+            } else {
+                return@retryWhen false
+            }
+        }
+        .catch {
+            // error
+        }
+        .collect {
+            // success
+        }
+}
+```
+- If we see, every time we are adding the delay of 2 seconds, but in real use-cases, we add delay with exponential backoff. Do not worry, we will implement that too.
+    
+
