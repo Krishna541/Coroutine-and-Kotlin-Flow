@@ -849,4 +849,71 @@ viewModelScope.launch {
 ```
 - If we see, every time we are adding the delay of 2 seconds, but in real use-cases, we add delay with exponential backoff. Do not worry, we will implement that too.
     
+# Callback Flow
+                                                    
+- Here, I will take an example of a LocationManager just for the sake of understanding.
+
+- Assume that we can use LocationManager and listen to the changes in location as below:
+```
+ // create a location listener
+val locationListener = object : LocationListener {
+
+    override fun onLocationUpdate(location: Location) {
+        // do something with the updated location
+    }
+
+}
+
+// register for location updates
+LocationManager.registerForLocation(locationListener)
+
+// unregister in onDestroy()
+LocationManager.unregisterForLocation(locationListener)
+```
+Here, we have a LocationListener through which we get the onLocationUpdate callback.
+
+Now, we want to use this LocationManager in the Flow API way.
+
+Let's do this by creating a function which returns Flow<Location> as below:
+```
+fun getLocationFlow(): Flow<Location> {
+    return callbackFlow {
+
+        val locationListener = object : LocationListener {
+
+            override fun onLocationUpdate(location: Location) {
+                trySend(location)
+            }
+
+        }
+
+        LocationManager.registerForLocation(locationListener)
+
+        awaitClose {
+            LocationManager.unregisterForLocation(locationListener)
+        }
+
+    }
+}
+```
+Now, it's time to understand what we have done to convert the Callback to Flow API.
+
+We have followed the following steps to convert the Callback to Flow API in Kotlin:
+
+- Create a function to return the Flow<Location>.
+- Use callbackFlow as the return block.
+- Use trySend() for the location updates.
+- Use awaitClose block to unregister.
+Now, we can use the above function as below:
+```
+launch {
+    getLocationFlow()
+    .collect { location ->
+        // do something with the updated location
+    }
+}
+```
+This is how we can convert any callback to Flow API in Kotlin using callbackFlow.
+
+
 
