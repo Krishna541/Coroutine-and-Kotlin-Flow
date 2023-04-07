@@ -622,12 +622,13 @@ For example:
 }.collect {
     Log.d(TAG, it.toString())
 }
-
+```
 #### Here, collect is the Terminal Operator.
 
 So, the most basic terminal operator is the collect operator which is the Collector.
 
 So, if you just write the following, the flow will not start:
+    
 ```
 (1..5).asFlow()
 .filter {
@@ -654,35 +655,33 @@ Here, the result will be 15.
 At the initial stage, we have 1, 2, 3, 4, 5 which are going to be emitted.
 
 Initially a = 0 and b = 1 which will keep on changing based on the steps.
-### Step 1:
+    
+## Step 1:
 ```
 a = 0, b = 1
-
 a = a + b = 0 + 1 = 1
 ```
-### Step 2:
+## Step 2:
 ```
 a = 1, b = 2
-
 a = a + b = 1 + 2 = 3
 ```
-### Step 3:
+## Step 3:
+    
 ```
 a = 3, b = 3
-
 a = a + b = 3 + 3 = 6
 ```
-### Step 4:
+## Step 4:
 ```
 a = 6, b = 4
-
 a = a + b = 6 + 4 = 10
 
 ```
-### Step 5:
+## Step 5:
+    
 ```
 a = 10, b = 5
-
 a = a + b = 10 + 5 = 15
 ```
 This is how the result will be 15.
@@ -752,8 +751,7 @@ fun <T> Flow<T>.retry(
     return retryWhen { cause, attempt -> attempt < retries && predicate(cause) }
 }
 ```
-If we see the retry function, it actually calls the retryWhen internally.
-
+- If we see the retry function, it actually calls the retryWhen internally.
 - retry function has default arguments.
 
 If we do not pass the retries, it will use the Long.MAX_VALUE.
